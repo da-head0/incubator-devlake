@@ -42,14 +42,14 @@ func CollectBoardFilterBegin(taskCtx plugin.SubTaskContext) errors.Error {
 	db := taskCtx.GetDal()
 	logger.Info("collect board in collectBoardFilterBegin: %d", data.Options.BoardId)
 	// get board filter id
-	filterId, err := getBoardFilterId(data)
+	filterId, err := getBoardByFilterId(data)
 	if err != nil {
 		return errors.Default.Wrap(err, fmt.Sprintf("error getting board filter id for connection_id:%d board_id:%d", data.Options.ConnectionId, data.Options.BoardId))
 	}
 	logger.Info("collect board filter:%s", filterId)
 
 	// get board filter jql
-	filterInfo, err := getBoardFilterJql(data, filterId)
+	filterInfo, err := getBoardFilterJql(data, filterId.ID)
 	if err != nil {
 		return errors.Default.Wrap(err, fmt.Sprintf("error getting board filter jql for connection_id:%d board_id:%d", data.Options.ConnectionId, data.Options.BoardId))
 	}
@@ -105,6 +105,20 @@ func CollectBoardFilterBegin(taskCtx plugin.SubTaskContext) errors.Error {
 	}
 	// no change
 	return nil
+}
+
+func getBoardByFilterId(data *JiraTaskData) (*FilterInfo, error) {
+	url := fmt.Sprintf("api/2/filter/%d", data.Options.FilterId)
+	filterInfo, err := data.ApiClient.Get(url, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	fi := &FilterInfo{}
+	err = helper.UnmarshalResponse(filterInfo, fi)
+	if err != nil {
+		return nil, err
+	}
+	return fi, nil
 }
 
 func getBoardFilterId(data *JiraTaskData) (string, error) {

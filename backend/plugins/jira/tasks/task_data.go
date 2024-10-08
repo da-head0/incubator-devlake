@@ -31,6 +31,7 @@ type JiraOptions struct {
 	ScopeConfig   *models.JiraScopeConfig `json:"scopeConfig" mapstructure:"scopeConfig"`
 	ScopeConfigId uint64                  `json:"scopeConfigId" mapstructure:"scopeConfigId"`
 	PageSize      int                     `json:"pageSize" mapstructure:"pageSize"`
+	FilterId      uint64                  `json:"filterId" mapstructure:"filterId"`
 }
 
 type JiraTaskData struct {
