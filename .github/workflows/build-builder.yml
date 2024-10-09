@@ -20,6 +20,7 @@ on:
   push:
     tags:
     - 'builder-*'
+  workflow_dispatch:
 jobs:
   build-lake:
     name: Build lake-builder image
