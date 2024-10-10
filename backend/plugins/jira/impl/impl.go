@@ -19,6 +19,8 @@ package impl
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/apache/incubator-devlake/core/context"
 	"github.com/apache/incubator-devlake/core/dal"
 	"github.com/apache/incubator-devlake/core/errors"
@@ -30,7 +32,6 @@ import (
 	"github.com/apache/incubator-devlake/plugins/jira/models/migrationscripts"
 	"github.com/apache/incubator-devlake/plugins/jira/tasks"
 	"github.com/apache/incubator-devlake/plugins/jira/tasks/apiv2models"
-	"net/http"
 )
 
 var _ interface {
@@ -204,8 +205,6 @@ func (p Jira) PrepareTaskData(taskCtx plugin.TaskContext, options map[string]int
 
 	if op.BoardId != 0 {
 		var scope *models.JiraBoard
-		// support v100 & advance mode
-		// If we still cannot find the record in db, we have to request from remote server and save it to db
 		db := taskCtx.GetDal()
 		err = db.First(&scope, dal.Where("connection_id = ? AND board_id = ?", op.ConnectionId, op.BoardId))
 		if err != nil && db.IsErrorNotFound(err) {
@@ -217,10 +216,21 @@ func (p Jira) PrepareTaskData(taskCtx plugin.TaskContext, options map[string]int
 				}
 				logger.Debug(fmt.Sprintf("Current project: %d", board.ID))
 				scope = board.ToToolLayer(connection.ID)
-				err = db.CreateIfNotExist(&scope)
+
+				// If FilterId is not set in options, try to get it from the board
+				if op.FilterId == 0 && scope.FilterId != 0 {
+					op.FilterId = scope.FilterId
+				}
+
+				err = db.CreateIfNotExist(scope)
 				if err != nil {
 					return nil, err
 				}
+			}
+		} else if err == nil {
+			// If FilterId is not set in options, use the one from the existing board record
+			if op.FilterId == 0 && scope.FilterId != 0 {
+				op.FilterId = scope.FilterId
 			}
 		}
 		if err != nil {

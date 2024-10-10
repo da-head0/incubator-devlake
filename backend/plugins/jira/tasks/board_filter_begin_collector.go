@@ -42,23 +42,12 @@ func CollectBoardFilterBegin(taskCtx plugin.SubTaskContext) errors.Error {
 	db := taskCtx.GetDal()
 	logger.Info("collect board in collectBoardFilterBegin: %d", data.Options.BoardId)
 
-	var filterId string
-	var err error
-
-	if data.Options.FilterId != 0 {
-		// If FilterId is provided, use it directly
-		filterId = fmt.Sprintf("%d", data.Options.FilterId)
-	} else {
-		// If FilterId is not provided, fetch it from the board configuration
-		filterId, err = getBoardFilterId(data)
-		if err != nil {
-			return errors.Default.Wrap(err, fmt.Sprintf("error getting board filter id for connection_id:%d board_id:%d", data.Options.ConnectionId, data.Options.BoardId))
-		}
-	}
+	// get board filter id
+	filterId, err := getBoardByFilterId(data)
 	logger.Info("collect board filter:%s", filterId)
 
 	// get board filter jql
-	filterInfo, err := getBoardFilterJql(data, filterId)
+	filterInfo, err := getBoardFilterJql(data, filterId.ID)
 	if err != nil {
 		return errors.Default.Wrap(err, fmt.Sprintf("error getting board filter jql for connection_id:%d board_id:%d", data.Options.ConnectionId, data.Options.BoardId))
 	}
